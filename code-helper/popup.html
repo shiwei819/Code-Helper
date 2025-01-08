@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coding Helper</title>
+  <style>
+    /* General page styles */
+    body {
+      font-family: "Arial", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+      color: #333;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    h2 {
+      color: #007BFF;
+      margin-top: 20px;
+    }
+
+    p {
+      margin: 10px auto;
+      max-width: 500px;
+      font-size: 1.1rem;
+    }
+
+    /* Floating button styles */
+    .code-helper-button {
+      position: absolute;
+      background: linear-gradient(135deg, #007BFF, #00D4FF);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .code-helper-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 30px rgba(0, 123, 255, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <h2>Code Helper</h2>
+  <p>Highlight code in your browser to get explanations and examples.</p>
+  
+  <!-- JavaScript to create a fashionable popup -->
+  <script>
+    let currentSelectedText = "";
+    let floatButton = null;
+
+    // Listen for text selection
+    document.addEventListener("mouseup", handleTextSelection);
+
+    function handleTextSelection(event) {
+      if (event.target.classList.contains("code-helper-button")) {
+        return;
+      }
+
+      const selectedText = window.getSelection().toString().trim();
+
+      if (selectedText && selectedText !== currentSelectedText) {
+        currentSelectedText = selectedText;
+        const selectionRange = window.getSelection().getRangeAt(0).getBoundingClientRect();
+        createFloatingButton(selectedText, selectionRange);
+      } else if (!selectedText) {
+        currentSelectedText = "";
+        removeFloatingButton();
+      }
+    }
+
+    function createFloatingButton(selectedText, selectionRange) {
+      if (floatButton) {
+        floatButton.style.top = `${window.scrollY + selectionRange.top - 50}px`;
+        floatButton.style.left = `${window.scrollX + selectionRange.left}px`;
+        return;
+      }
+
+      floatButton = document.createElement("button");
+      floatButton.textContent = "Explain";
+      floatButton.className = "code-helper-button";
+      floatButton.style.top = `${window.scrollY + selectionRange.top - 50}px`;
+      floatButton.style.left = `${window.scrollX + selectionRange.left}px`;
+
+      floatButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openExplanationPopup(selectedText);
+      });
+
+      document.body.appendChild(floatButton);
+    }
+
+    function removeFloatingButton() {
+      if (floatButton) {
+        floatButton.remove();
+        floatButton = null;
+      }
+    }
+
+    function openExplanationPopup(selectedText) {
+      const popup = document.createElement("div");
+      popup.className = "popup-container";
+
+      popup.innerHTML = `
+        <div class="popup">
+          <div class="popup-header">
+            <h3>Code Explanation</h3>
+            <button class="popup-close">&times;</button>
+          </div>
+          <div class="popup-content">
+            <p>Loading explanation for: <strong>${selectedText}</strong></p>
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      `;
+
+      // Close button functionality
+      popup.querySelector(".popup-close").addEventListener("click", () => {
+        popup.remove();
+      });
+
+      document.body.appendChild(popup);
+
+      // Fetch the explanation
+      fetchCodeExplanation(selectedText, popup.querySelector(".popup-content"));
+    }
+
+    async function fetchCodeExplanation(code, popupContent) {
+      try {
+        const response = await fetch("http://127.0.0.1:5000/api/explanation", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ code }),
+        });
+
+        const data = await response.json();
+
+        if (data.explanation) {
+          popupContent.innerHTML = `<pre>${data.explanation}</pre>`;
+        } else {
+          popupContent.innerHTML = `<p>Error: ${data.error || "Unable to fetch explanation"}</p>`;
+        }
+      } catch (error) {
+        popupContent.innerHTML = `<p>Error: ${error.message}</p>`;
+      }
+    }
+  </script>
+  <style>
+    /* Popup container */
+    .popup-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    /* Popup box */
+    .popup {
+      background: white;
+      width: 90%;
+      max-width: 500px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      animation: fadeIn 0.3s ease;
+    }
+
+    /* Popup header */
+    .popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #007BFF;
+      color: white;
+      padding: 15px;
+    }
+
+    .popup-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .popup-header .popup-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .popup-header .popup-close:hover {
+      color: #FFD700;
+    }
+
+    /* Popup content */
+    .popup-content {
+      padding: 20px;
+      font-size: 1rem;
+      color: #333;
+      text-align: left;
+    }
+
+    /* Loading spinner */
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(0, 0, 255, 0.2);
+      border-top: 4px solid #007BFF;
+      border-radius: 50%;
+      margin: 20px auto;
+      animation: spin 1s linear infinite;
+    }
+
+    /* Animations */
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</body>
+</html>

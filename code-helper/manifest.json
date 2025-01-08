@@ -1,0 +1,21 @@
+{
+    "manifest_version": 3,
+    "name": "Code Helper",
+    "version": "1.0",
+    "description": "Get code explanations and examples using GPT-4o Mini.",
+    "permissions": ["activeTab", "scripting"],
+    "host_permissions": ["<all_urls>"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "action": {
+      "default_popup": "popup.html"
+    },
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["content.js"],
+        "css": ["style.css"]
+      }
+    ]
+  }
